@@ -494,19 +494,26 @@ class TreeholeClient:
 
         started = time.perf_counter()
 
-        # First page: discover pagination metadata
+        # First page: discover pagination metadata. The web app's axios
+        # interceptor reads the bearer token from the pku_token cookie and
+        # sends Uuid from localStorage. localStorage.token is not used here.
         first_result = self.page.evaluate(
             """
             async () => {
-                const token = localStorage.getItem('token') || '';
+                function getCookie(name) {
+                    const escaped = name.replace(/[.$?*|{}()\\[\\]\\/\\+^]/g, '\\\\$&');
+                    const match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'));
+                    return match ? decodeURIComponent(match[1]) : '';
+                }
+                const token = getCookie('pku_token');
                 const uuid = localStorage.getItem('pku-uuid') || '';
                 const resp = await fetch(
                     '/api/pku_comment_v3/%PID%?page=1&limit=10',
                     {
                         headers: {
-                            'authorization': 'Bearer ' + token,
-                            'uuid': uuid,
-                            'accept': 'application/json, text/plain, */*',
+                            'Authorization': 'Bearer ' + token,
+                            'Uuid': uuid,
+                            'Accept': 'application/json, text/plain, */*',
                         },
                         credentials: 'same-origin',
                     }
@@ -537,15 +544,20 @@ class TreeholeClient:
             page_result = self.page.evaluate(
                 """
                 async () => {
-                    const token = localStorage.getItem('token') || '';
+                    function getCookie(name) {
+                        const escaped = name.replace(/[.$?*|{}()\\[\\]\\/\\+^]/g, '\\\\$&');
+                        const match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'));
+                        return match ? decodeURIComponent(match[1]) : '';
+                    }
+                    const token = getCookie('pku_token');
                     const uuid = localStorage.getItem('pku-uuid') || '';
                     const resp = await fetch(
                         '/api/pku_comment_v3/%PID%?page=%PAGE%&limit=10',
                         {
                             headers: {
-                                'authorization': 'Bearer ' + token,
-                                'uuid': uuid,
-                                'accept': 'application/json, text/plain, */*',
+                                'Authorization': 'Bearer ' + token,
+                                'Uuid': uuid,
+                                'Accept': 'application/json, text/plain, */*',
                             },
                             credentials: 'same-origin',
                         }
